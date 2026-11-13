@@ -173,13 +173,26 @@ func menuBarIcon(codepoint: UInt32 = 0xF02AA) -> NSImage? {
     guard CTFontGetGlyphsForCharacters(font as CTFont, utf16, &ids, utf16.count) else {
         return NSImage(systemSymbolName: "keyboard", accessibilityDescription: "herdr shortcuts")
     }
-    let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.black]
-    let bounds = (glyph as NSString).boundingRect(with: .zero, options: [.usesFontLeading, .usesDeviceMetrics], attributes: attrs)
-    let size = NSSize(width: 18, height: 18)
-    let image = NSImage(size: size, flipped: false) { rect in
-        let origin = NSPoint(x: (rect.width - bounds.width) / 2 - bounds.minX,
-                             y: (rect.height - bounds.height) / 2 - bounds.minY)
-        (glyph as NSString).draw(at: origin, withAttributes: attrs)
+    // Use the glyph's exact outline so it can be scaled and centered precisely,
+    // instead of relying on the font's line metrics (which left it small and high).
+    guard let path = CTFontCreatePathForGlyph(font as CTFont, ids[0], nil) else {
+        return NSImage(systemSymbolName: "keyboard", accessibilityDescription: "herdr shortcuts")
+    }
+    let box = path.boundingBoxOfPath
+    // Canvas matches a standard menu bar icon; the glyph fills up to 22×16 pt of it,
+    // which lines up with the visual size of the system icons next to it.
+    let canvas = NSSize(width: 24, height: 22)
+    let maxW: CGFloat = 22, maxH: CGFloat = 16
+    let scale = min(maxW / box.width, maxH / box.height)
+    let image = NSImage(size: canvas, flipped: false) { rect in
+        guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
+        ctx.translateBy(x: (rect.width - box.width * scale) / 2,
+                        y: (rect.height - box.height * scale) / 2)
+        ctx.scaleBy(x: scale, y: scale)
+        ctx.translateBy(x: -box.minX, y: -box.minY)
+        ctx.addPath(path)
+        ctx.setFillColor(NSColor.black.cgColor)
+        ctx.fillPath()
         return true
     }
     image.isTemplate = true   // macOS tints it to match the menu bar (light or dark)
@@ -289,7 +302,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let store = Store()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
             button.image = menuBarIcon()
             button.action = #selector(toggle)
