@@ -29,9 +29,15 @@ To see what the app parses from your config without opening the popover:
 
 ## Font
 
-The app's text uses **Hurmit Nerd Font Light** if it's installed on your Mac (install [Fonts/HurmitNerdFont-Light.otf](Fonts/HurmitNerdFont-Light.otf) by double-clicking it), and the system font otherwise. The font is not bundled, which keeps the app around 0.3 MB.
+The app's text uses **Hurmit Nerd Font Light** if it's installed on your Mac (install [Fonts/HurmitNerdFont-Light.otf](Fonts/HurmitNerdFont-Light.otf) by double-clicking it), and the system font otherwise. The font is not bundled, which keeps the app small.
 
 The menu bar icon is the `md-glasses` glyph (`U+F02AA`) from Hurmit Nerd Font, stored in the code as its outline, so it shows up whether or not the font is installed.
+
+## App icon
+
+<img src="icon/AppIcon-1024.png" width="128" alt="NerdrKeys app icon: neon pink-to-cyan glasses on a dark purple tile">
+
+The Finder/Spotlight icon is drawn in code by [icon/draw.swift](icon/draw.swift) from the same glasses outline, and the generated `AppIcon.icns` is committed, so `./build.sh` doesn't need to redraw it. To change the design, edit `draw.swift` and run `./icon/make-icon.sh`. That script needs `pngquant` (`brew install pngquant`) because it reduces each size to a 256-colour palette, which takes the icon from about 750 KB to about 115 KB with no visible difference at icon sizes.
 
 Hurmit Nerd Font is a patched version of Hermit by Pablo Caro, licensed under the SIL Open Font License 1.1. See [Fonts/OFL-LICENSE.txt](Fonts/OFL-LICENSE.txt).
 
@@ -41,4 +47,4 @@ Hurmit Nerd Font is a patched version of Hermit by Pablo Caro, licensed under th
 
 ## Footprint
 
-About 0.3 MB on disk, about 14 MB of memory, 0% CPU when idle. It runs nothing in the background, opens no network connections, and only reads your herdr config when you click the icon.
+About 0.4 MB on disk (0.26 MB program + 0.11 MB icon), about 14 MB of memory, 0% CPU when idle. It runs nothing in the background, opens no network connections, and only reads your herdr config when you click the icon.
