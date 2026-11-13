@@ -6,12 +6,10 @@ cd "$(dirname "$0")"
 NAME="NerdrKeys"
 APP="$NAME.app"
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/Fonts"
+mkdir -p "$APP/Contents/MacOS"
 
 swiftc -O -o "$APP/Contents/MacOS/$NAME" main.swift
 
-# Bundle the font so the app looks the same on any Mac (SIL OFL: license ships with it).
-cp Fonts/*.otf Fonts/OFL-LICENSE.txt "$APP/Contents/Resources/Fonts/"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -25,7 +23,6 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleShortVersionString</key><string>1.0</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSUIElement</key><true/>
-  <key>ATSApplicationFontsPath</key><string>Fonts</string>
 </dict>
 </plist>
 PLIST

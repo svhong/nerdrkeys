@@ -153,34 +153,81 @@ func prettyKeys(_ binding: String, prefix: String) -> [String] {
 
 // MARK: - Font & icon
 
-/// Hurmit Nerd Font Light, bundled in the app (Contents/Resources/Fonts) and also used if installed.
+/// App text uses Hurmit Nerd Font Light when it is installed on this Mac, otherwise the system font.
 let appFontName = "HurmitNF-Light"
 
-func appFont(_ size: CGFloat) -> Font {
-    NSFont(name: appFontName, size: size) != nil ? .custom(appFontName, size: size) : .system(size: size)
+func appFont(_ size: CGFloat, _ scale: CGFloat = 1) -> Font {
+    let size = size * scale
+    return NSFont(name: appFontName, size: size) != nil ? .custom(appFontName, size: size) : .system(size: size)
 }
 
-/// Draws one Nerd Font glyph (default U+F02AA, md-glasses) as a template image for the menu bar.
-/// Falls back to the SF Symbol keyboard if the font or glyph isn't available.
-func menuBarIcon(codepoint: UInt32 = 0xF02AA) -> NSImage? {
-    guard let font = NSFont(name: appFontName, size: 16),
-          let scalar = UnicodeScalar(codepoint) else {
-        return NSImage(systemSymbolName: "keyboard", accessibilityDescription: "herdr shortcuts")
-    }
-    let glyph = String(scalar)
-    var ids = [CGGlyph](repeating: 0, count: 2)
-    let utf16 = Array(glyph.utf16)
-    guard CTFontGetGlyphsForCharacters(font as CTFont, utf16, &ids, utf16.count) else {
-        return NSImage(systemSymbolName: "keyboard", accessibilityDescription: "herdr shortcuts")
-    }
-    // Use the glyph's exact outline so it can be scaled and centered precisely,
-    // instead of relying on the font's line metrics (which left it small and high).
-    guard let path = CTFontCreatePathForGlyph(font as CTFont, ids[0], nil) else {
-        return NSImage(systemSymbolName: "keyboard", accessibilityDescription: "herdr shortcuts")
-    }
+/// The md-glasses icon (Nerd Fonts U+F02AA, from Hurmit Nerd Font, SIL OFL 1.1),
+/// stored as its outline so the app doesn't need to ship the font. Size: 97.89 × 37.50.
+func glassesPath() -> CGPath {
+    let p = CGMutablePath()
+    p.move(to: CGPoint(x: 11.44, y: 29.30))
+    p.addLine(to: CGPoint(x: 36.44, y: 29.30))
+    p.addCurve(to: CGPoint(x: 38.34, y: 28.40), control1: CGPoint(x: 37.34, y: 29.30), control2: CGPoint(x: 37.94, y: 29.00))
+    p.addCurve(to: CGPoint(x: 38.74, y: 26.60), control1: CGPoint(x: 38.74, y: 27.80), control2: CGPoint(x: 38.84, y: 27.30))
+    p.addLine(to: CGPoint(x: 34.34, y: 13.30))
+    p.addCurve(to: CGPoint(x: 32.04, y: 9.80), control1: CGPoint(x: 34.04, y: 12.00), control2: CGPoint(x: 33.34, y: 10.80))
+    p.addCurve(to: CGPoint(x: 28.04, y: 8.40), control1: CGPoint(x: 30.74, y: 8.80), control2: CGPoint(x: 29.44, y: 8.40))
+    p.addLine(to: CGPoint(x: 15.54, y: 8.40))
+    p.addCurve(to: CGPoint(x: 12.14, y: 9.80), control1: CGPoint(x: 14.34, y: 8.40), control2: CGPoint(x: 13.14, y: 8.90))
+    p.addCurve(to: CGPoint(x: 10.24, y: 13.30), control1: CGPoint(x: 11.14, y: 10.70), control2: CGPoint(x: 10.54, y: 11.90))
+    p.addLine(to: CGPoint(x: 8.34, y: 25.60))
+    p.addCurve(to: CGPoint(x: 8.94, y: 28.20), control1: CGPoint(x: 8.24, y: 26.70), control2: CGPoint(x: 8.34, y: 27.50))
+    p.addCurve(to: CGPoint(x: 11.44, y: 29.30), control1: CGPoint(x: 9.54, y: 28.90), control2: CGPoint(x: 10.34, y: 29.30))
+    p.closeSubpath()
+    p.move(to: CGPoint(x: 28.04, y: 0.00))
+    p.addCurve(to: CGPoint(x: 37.14, y: 3.20), control1: CGPoint(x: 31.34, y: 0.00), control2: CGPoint(x: 34.34, y: 1.10))
+    p.addCurve(to: CGPoint(x: 42.54, y: 10.90), control1: CGPoint(x: 39.94, y: 5.30), control2: CGPoint(x: 41.74, y: 7.90))
+    p.addLine(to: CGPoint(x: 46.24, y: 22.70))
+    p.addCurve(to: CGPoint(x: 48.94, y: 23.40), control1: CGPoint(x: 46.94, y: 23.20), control2: CGPoint(x: 47.94, y: 23.40))
+    p.addCurve(to: CGPoint(x: 51.64, y: 22.70), control1: CGPoint(x: 49.94, y: 23.40), control2: CGPoint(x: 50.84, y: 23.20))
+    p.addLine(to: CGPoint(x: 55.34, y: 11.30))
+    p.addCurve(to: CGPoint(x: 60.74, y: 3.30), control1: CGPoint(x: 56.14, y: 8.20), control2: CGPoint(x: 57.94, y: 5.50))
+    p.addCurve(to: CGPoint(x: 69.84, y: 0.00), control1: CGPoint(x: 63.54, y: 1.10), control2: CGPoint(x: 66.54, y: 0.00))
+    p.addLine(to: CGPoint(x: 82.34, y: 0.00))
+    p.addCurve(to: CGPoint(x: 91.24, y: 3.40), control1: CGPoint(x: 85.64, y: 0.00), control2: CGPoint(x: 88.54, y: 1.10))
+    p.addCurve(to: CGPoint(x: 95.84, y: 11.70), control1: CGPoint(x: 93.94, y: 5.70), control2: CGPoint(x: 95.44, y: 8.40))
+    p.addLine(to: CGPoint(x: 97.74, y: 24.60))
+    p.addCurve(to: CGPoint(x: 95.14, y: 33.70), control1: CGPoint(x: 98.24, y: 28.10), control2: CGPoint(x: 97.44, y: 31.20))
+    p.addCurve(to: CGPoint(x: 86.44, y: 37.50), control1: CGPoint(x: 92.84, y: 36.20), control2: CGPoint(x: 89.94, y: 37.50))
+    p.addLine(to: CGPoint(x: 61.44, y: 37.50))
+    p.addCurve(to: CGPoint(x: 52.84, y: 33.60), control1: CGPoint(x: 57.74, y: 37.50), control2: CGPoint(x: 54.94, y: 36.20))
+    p.addCurve(to: CGPoint(x: 51.64, y: 31.40), control1: CGPoint(x: 52.34, y: 32.90), control2: CGPoint(x: 51.94, y: 32.20))
+    p.addCurve(to: CGPoint(x: 46.24, y: 31.40), control1: CGPoint(x: 49.84, y: 31.80), control2: CGPoint(x: 48.04, y: 31.80))
+    p.addCurve(to: CGPoint(x: 45.04, y: 33.60), control1: CGPoint(x: 45.94, y: 32.20), control2: CGPoint(x: 45.54, y: 32.90))
+    p.addCurve(to: CGPoint(x: 36.44, y: 37.50), control1: CGPoint(x: 42.94, y: 36.20), control2: CGPoint(x: 40.14, y: 37.50))
+    p.addLine(to: CGPoint(x: 11.44, y: 37.50))
+    p.addCurve(to: CGPoint(x: 2.74, y: 33.70), control1: CGPoint(x: 7.94, y: 37.50), control2: CGPoint(x: 5.04, y: 36.20))
+    p.addCurve(to: CGPoint(x: 0.14, y: 24.40), control1: CGPoint(x: 0.44, y: 31.20), control2: CGPoint(x: -0.36, y: 28.10))
+    p.addLine(to: CGPoint(x: 2.04, y: 11.90))
+    p.addCurve(to: CGPoint(x: 6.54, y: 3.50), control1: CGPoint(x: 2.44, y: 8.60), control2: CGPoint(x: 3.94, y: 5.80))
+    p.addCurve(to: CGPoint(x: 15.54, y: 0.00), control1: CGPoint(x: 9.14, y: 1.20), control2: CGPoint(x: 12.14, y: 0.00))
+    p.closeSubpath()
+    p.move(to: CGPoint(x: 61.44, y: 29.30))
+    p.addLine(to: CGPoint(x: 86.44, y: 29.30))
+    p.addCurve(to: CGPoint(x: 88.94, y: 28.20), control1: CGPoint(x: 87.54, y: 29.30), control2: CGPoint(x: 88.34, y: 28.90))
+    p.addCurve(to: CGPoint(x: 89.54, y: 25.80), control1: CGPoint(x: 89.54, y: 27.50), control2: CGPoint(x: 89.64, y: 26.70))
+    p.addLine(to: CGPoint(x: 87.44, y: 13.10))
+    p.addCurve(to: CGPoint(x: 85.74, y: 9.80), control1: CGPoint(x: 87.34, y: 11.80), control2: CGPoint(x: 86.74, y: 10.70))
+    p.addCurve(to: CGPoint(x: 82.34, y: 8.40), control1: CGPoint(x: 84.74, y: 8.90), control2: CGPoint(x: 83.54, y: 8.40))
+    p.addLine(to: CGPoint(x: 69.84, y: 8.40))
+    p.addCurve(to: CGPoint(x: 65.94, y: 10.00), control1: CGPoint(x: 68.44, y: 8.40), control2: CGPoint(x: 67.14, y: 8.90))
+    p.addCurve(to: CGPoint(x: 63.44, y: 13.70), control1: CGPoint(x: 64.74, y: 11.10), control2: CGPoint(x: 63.84, y: 12.30))
+    p.addLine(to: CGPoint(x: 59.14, y: 26.40))
+    p.addCurve(to: CGPoint(x: 59.54, y: 28.40), control1: CGPoint(x: 59.04, y: 27.10), control2: CGPoint(x: 59.14, y: 27.80))
+    p.addCurve(to: CGPoint(x: 61.44, y: 29.30), control1: CGPoint(x: 59.94, y: 29.00), control2: CGPoint(x: 60.54, y: 29.30))
+    p.closeSubpath()
+    return p
+}
+
+/// Draws the glasses as a template image for the menu bar: scaled to fit 22×16 pt and centered.
+func menuBarIcon() -> NSImage {
+    let path = glassesPath()
     let box = path.boundingBoxOfPath
-    // Canvas matches a standard menu bar icon; the glyph fills up to 22×16 pt of it,
-    // which lines up with the visual size of the system icons next to it.
     let canvas = NSSize(width: 24, height: 22)
     let maxW: CGFloat = 22, maxH: CGFloat = 16
     let scale = min(maxW / box.width, maxH / box.height)
@@ -204,9 +251,10 @@ func menuBarIcon(codepoint: UInt32 = 0xF02AA) -> NSImage? {
 
 struct KeyCap: View {
     let text: String
+    var scale: CGFloat = 1
     var body: some View {
         Text(text)
-            .font(appFont(11))
+            .font(appFont(11, scale))
             .padding(.horizontal, 5).padding(.vertical, 1)
             .background(RoundedRectangle(cornerRadius: 4).fill(Color.primary.opacity(0.08)))
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.primary.opacity(0.15)))
@@ -219,6 +267,27 @@ final class Store: ObservableObject {
     @Published var error: String?
     @Published var query = ""
     @Published var height: CGFloat = 460
+
+    /// One number that sizes all text (1.0 = default). Saved between launches;
+    /// also settable from Terminal: `defaults write local.nerdrkeys textScale 1.2`
+    static let scaleRange: ClosedRange<CGFloat> = 0.8...1.6
+    @Published var scale: CGFloat = {
+        let saved = CGFloat(UserDefaults.standard.double(forKey: "textScale"))
+        return saved == 0 ? 1 : min(max(saved, Store.scaleRange.lowerBound), Store.scaleRange.upperBound)
+    }() {
+        didSet {
+            UserDefaults.standard.set(Double(scale), forKey: "textScale")
+            onResize?()
+        }
+    }
+    var width: CGFloat { (320 * scale).rounded() }   // widen with the text so labels don't get cut off
+    var onResize: (() -> Void)?
+
+    func bumpScale(_ delta: CGFloat) {
+        let next = ((scale + delta) * 10).rounded() / 10
+        scale = min(max(next, Store.scaleRange.lowerBound), Store.scaleRange.upperBound)
+    }
+
     func reload() { (prefix, groups, error) = loadShortcuts() }
 }
 
@@ -233,39 +302,42 @@ struct CheatSheet: View {
         }
     }
 
+    private var s: CGFloat { store.scale }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("herdr shortcuts").font(appFont(14))
+                Text("herdr shortcuts").font(appFont(14, s))
                 Spacer()
-                Text("prefix").font(appFont(11)).foregroundStyle(.secondary)
-                KeyCap(text: prettyKeys(store.prefix, prefix: store.prefix)[0])
+                Text("prefix").font(appFont(11, s)).foregroundStyle(.secondary)
+                KeyCap(text: prettyKeys(store.prefix, prefix: store.prefix)[0], scale: s)
             }
             .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
 
             TextField("Filter…", text: $store.query)
                 .textFieldStyle(.roundedBorder)
+                .font(appFont(12, s))
                 .padding(.horizontal, 12).padding(.bottom, 8)
 
             Divider()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    if let e = store.error { Text(e).foregroundStyle(.red).font(appFont(11)) }
+                    if let e = store.error { Text(e).foregroundStyle(.red).font(appFont(11, s)) }
                     ForEach(filtered) { group in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(group.title.uppercased())
-                                .font(appFont(10))
+                                .font(appFont(10, s))
                                 .foregroundStyle(.secondary)
                             ForEach(group.items) { item in
                                 HStack {
-                                    Text(item.label).font(appFont(12))
+                                    Text(item.label).font(appFont(12, s))
                                     Spacer()
                                     HStack(spacing: 3) {
                                         let caps = prettyKeys(item.keys, prefix: store.prefix)
                                         ForEach(caps.indices, id: \.self) { i in
-                                            if i > 0 { Text("then").font(appFont(9)).foregroundStyle(.tertiary) }
-                                            KeyCap(text: caps[i])
+                                            if i > 0 { Text("then").font(appFont(9, s)).foregroundStyle(.tertiary) }
+                                            KeyCap(text: caps[i], scale: s)
                                         }
                                     }
                                 }
@@ -284,13 +356,24 @@ struct CheatSheet: View {
                     NSWorkspace.shared.open(URL(fileURLWithPath: path))
                 }
                 Spacer()
+                // Text size: A− / A+ step by 10%; click the percentage to reset.
+                Button("A−") { store.bumpScale(-0.1) }
+                    .disabled(s <= Store.scaleRange.lowerBound)
+                    .help("Smaller text")
+                Button("\(Int((s * 100).rounded()))%") { store.scale = 1 }
+                    .foregroundStyle(.secondary)
+                    .help("Reset text size")
+                Button("A+") { store.bumpScale(0.1) }
+                    .disabled(s >= Store.scaleRange.upperBound)
+                    .help("Bigger text")
+                Spacer()
                 Button("Quit") { NSApp.terminate(nil) }
             }
             .buttonStyle(.borderless)
-            .font(appFont(11))
+            .font(appFont(11, s))
             .padding(.horizontal, 12).padding(.vertical, 8)
         }
-        .frame(width: 320, height: store.height)
+        .frame(width: store.width, height: store.height)
     }
 }
 
@@ -313,7 +396,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let host = NSHostingController(rootView: CheatSheet(store: store))
         host.sizingOptions = []   // keep the popover the size we set, so it stays anchored under the icon
         popover.contentViewController = host
-        popover.contentSize = NSSize(width: 320, height: store.height)
+        popover.contentSize = NSSize(width: store.width, height: store.height)
+        store.onResize = { [weak self] in
+            guard let self else { return }
+            self.popover.contentSize = NSSize(width: self.store.width, height: self.store.height)
+        }
     }
 
     @objc private func toggle() {
@@ -325,7 +412,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Fit below the menu bar: never taller than the space under it, minus a gap.
             let visible = button.window?.screen?.visibleFrame.height ?? 800
             store.height = min(460, visible - 40)
-            popover.contentSize = NSSize(width: 320, height: store.height)
+            popover.contentSize = NSSize(width: store.width, height: store.height)
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             NSApp.activate(ignoringOtherApps: true)
         }
@@ -335,6 +422,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 // `NerdrKeys --dump` prints what the popover would show, for debugging.
 if CommandLine.arguments.contains("--dump") {
     let r = loadShortcuts()
+    print("text scale: \(Store().scale)")
     if let e = r.error { print("error:", e) }
     for g in r.groups {
         print("\n" + g.title)
