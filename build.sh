@@ -35,6 +35,9 @@ codesign --force --sign - "$APP" >/dev/null 2>&1 || true
 mkdir -p "$HOME/Applications"
 pkill -x "$NAME" 2>/dev/null || true
 rm -rf "$HOME/Applications/$APP"
-cp -R "$APP" "$HOME/Applications/"
+# Move (not copy) so only one NerdrKeys.app exists; a leftover build copy here
+# shows up as a duplicate in Spotlight.
+mv "$APP" "$HOME/Applications/"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$HOME/Applications/$APP" || true
 open "$HOME/Applications/$APP"
 echo "Installed and launched ~/Applications/$APP"
